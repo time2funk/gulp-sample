@@ -14,7 +14,8 @@ const babelify = require('babelify');
 const source = require('vinyl-source-stream');
 const buffer = require('vinyl-buffer'); 
 const uglify = require('gulp-uglify');
-    
+
+const rootDIR = global.__basedir;
 const entryDIR = 'src';
 const outputDIR = 'dist';
 
@@ -26,22 +27,19 @@ const sassDIR = 'scss';
 const stylesDIR = 'css';
 
 
-module.exports = {
-    js,
-    style,
-    watch
-};
-const js = function() {
-    const out_path = path.join(__dirname, outputDIR, javascriptDIR);
+const jsTask = function() {
+    const out_path = path.join(rootDIR, outputDIR, javascriptDIR);
 
     let output = '';
 
-    return Promise.map( javascriptFILES, async itemName => {
-        const item = path.join(__dirname, entryDIR, javascriptDIR, itemName);
+    return Promise.map( javascriptFILES, async item => {
+        // const item = path.join(rootDIR, entryDIR, javascriptDIR, itemName);
         output += item + '\n';
         
         await browserify({
-            entries: [item]
+            entries: [
+                path.join(rootDIR, entryDIR, javascriptDIR, item)
+            ]
         })
         .transform( babelify, { presets: ['@babel/env']})
         .bundle()
@@ -61,10 +59,11 @@ const js = function() {
         console.log('output', output);
     });   
 };
+module.exports.js = jsTask;
 
-const style = function () {
-    const in_path = path.join(__dirname, entryDIR, sassDIR);
-    const out_path = path.join(__dirname, outputDIR, stylesDIR);
+const styleTask = function () {
+    const in_path = path.join(rootDIR, entryDIR, sassDIR);
+    const out_path = path.join(rootDIR, outputDIR, stylesDIR);
     const file_path = `${in_path}/${sassFILE}`;
 
     // console.log(in_path);
@@ -89,10 +88,11 @@ const style = function () {
         .pipe( sourcemaps.write('./'))
         .pipe( gulp.dest( out_path));
 };
+module.exports.style = styleTask;
 
-const watch = async function () {
-    const js_path = path.join(__dirname, entryDIR, javascriptDIR);
-    const style_path = path.join(__dirname, entryDIR, sassDIR);
+const watchTask = async function () {
+    const js_path = path.join(rootDIR, entryDIR, javascriptDIR);
+    const style_path = path.join(rootDIR, entryDIR, sassDIR);
     
     console.log(js_path);
     console.log(style_path);
@@ -100,6 +100,7 @@ const watch = async function () {
     gulp.watch( js_path, gulp.series('js'));
     gulp.watch( style_path, gulp.series('style'));
 };
+module.exports.watch = watchTask;
 
 
 // const browserWatch = gulp.parallel( function() {
